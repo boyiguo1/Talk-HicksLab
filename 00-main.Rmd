@@ -1,0 +1,105 @@
+---
+title: "Untitled"
+author: "Boyi Guo"
+institute: |
+  | Department of Biostatistics
+  | University of Alabama at Birmingham
+date: "August 8th, 2021 "
+output: 
+  beamer_presentation:
+    keep_tex: FALSE
+    theme: "Szeged"
+    colortheme: "spruce"
+    toc: FALSE
+    number_section: FALSE
+    slide_level: 3
+    includes:
+      in_header: "preamble.tex"
+classoption: "aspectratio=169"
+bibliography:
+  - bibfile.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Outline
+  - Self-introduction
+  - Multivariate Outcome Treatment Effect Random Forest (MOTE RF)
+  - Bayesian Hierarchical Additive Model
+  - Epidemiology Study
+  - Future Directions
+
+# MOTE RF
+### Motivation
+- A study about different forms of almond diet (whole almond Vs processed almond) on improving biomarkers
+  - Balanced two-arm randomized trial
+  - Microbiomes and Biomarkers are measured pre- and post- intervention
+  
+- How would the treatment effect of improving the biomarker be different regarding their pre-treatment microbiome status
+  - treatment effect
+
+### Challenges
+- Unobservable treatment effect
+- Multivariate outcome
+- Pre- and Post- collected data
+- Correlation structure among predictors and outcomes
+
+### Assumptions
+
+# BHAM {.unlisted}
+```{r child = "02-BHAM.Rmd"}
+```
+
+# Collaborative Projects
+
+
+# Future Direction
+
+# Closing Remarks
+
+### BHAM Simulation Study {.unlisted .unnumbered}
+* Follow the data generating process introduced in @Bai2020. 
+* $n_{train} = 500$, $n_{test}=1000$
+* $p=4, 10, 50, 200$
+$$
+\mu = 5 \sin(2\pi x_1) - 4 \cos(2\pi x_2 -0.5) + 6(x_3-0.5) - 5(x_4^2 -0.3),
+$$
+
+* $f_j(x_j) = 0$ for $j = 5, \dots, p$.
+* 2 types of outcome: Gaussian ($\phi=1$), Binomial
+* Splines are constructed using 10 knots
+* 50 Iterations
+
+### Comparison & Metircs {.unlisted .unnumbered}
+* Methods of comparison
+  * Proposed model with EM-CD and EM-IWLS
+  * mgcv [@Wood2004]
+  * COSSO [@Zhang2006GAM] and adaptive COSSO[@Storlie2011]
+  * Sparse Bayesian GAM [@Bai2021]
+
+* Metrics
+  * out-of-sample $R^2$ for continuous outcomes
+  * out-of-sample AUC for binary outcomes
+  
+### Out-of-sample AUC {.unlisted .unnumbered}
+
+* The proposed method works better in low, medium, high settings than other state-of-art methods
+* SB-GAM works better in ultra-high setting
+
+\begin{tabular}{r|l|l|l|l|l|l}
+\hline
+p & EM-IWLS & EM-CD & COSSO & ACOSSO & mgcv & SB-GAM\\
+\hline
+4 & \textbf{0.94 (0.01)} & 0.89 (0.04) & 0.90 (0.02) & 0.90 (0.02) & 0.94 (0.01) & 0.93 (0.01)\\
+\hline
+10 & \textbf{0.93 (0.01)} & 0.87 (0.03) & 0.87 (0.03) & 0.85 (0.03) & 0.92 (0.04) & 0.92 (0.01)\\
+\hline
+50 & \textbf{0.92 (0.01)} & 0.87 (0.02) & 0.83 (0.02) & 0.83 (0.02) & 0.76 (0.04) & 0.92 (0.01)\\
+\hline
+200 & 0.88 (0.01) & 0.86 (0.02) & 0.81 (0.06) & 0.81 (0.08) & - & \textbf{0.92 (0.01)}\\
+\hline
+\end{tabular}  
+
+# References {.allowframebreaks}

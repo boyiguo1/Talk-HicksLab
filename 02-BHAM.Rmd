@@ -1,0 +1,216 @@
+### Curve Interpolation
+
+* Traditional modeling approach
+  * Categorization of continuous variable
+  * Polynomial regression
+  * Simple but may be statistically flawed
+
+* Machine learning methods
+  * Random forests, neural network
+  * Black-box algorithms
+  * Accurate but too complicated for interpretation
+
+### Generalized Additive Model
+Firstly formalized by @Hastie1987
+\begin{gather*}
+  y_i \iid EF(\mu_i, \phi), \quad i = 1, \dots, n\\
+  \mu_i = g^{-1}(a + \sum\limits^p_{j=1}f_j(x_{ij}))
+\end{gather*}
+where $g(\cdot)$ is a link function, $\phi$ is the dispersion parameter
+
+* Objective: to estimate smoothing functions $f_j(\cdot)$
+* Applications:
+  * Dose-response curve
+  * Time-varying effect
+
+### High-dimensional GAM
+* Grouped penalty models
+  * Grouped lasso penalty [@Ravikumar2009; @Huang2010], grouped SCAD penalty [@Wang2007; @Xue2009]
+  * Sparse penalty induces excess shrinkage, causing inaccurate interpolation of non-linear effect
+
+* Bayesian Hierarchical Models
+  * Grouped spike-and-slab priors [@Scheipl2012; @Yang2020], grouped spike-and-slab lasso prior[@Bai2020; @Bai2021]
+  * Mostly Markov chain Monte Carlo methods for model fitting
+  * Computational inefficiency causes scaling problems in high-dimensional data analysis
+  
+### Other challenges
+* Bi-level selection
+  * To identify linear- and non-linear effects
+  * All-in-all-out selection reduces the ability of result interpretation
+  
+* Uncertainty measures
+  * Penalized models doesn't provide uncertainty measures
+  * Bayesian models with MCMC algorithms are not scalable enough
+
+
+### Objectives
+* To develop statistical models that improve curve interpolation in high-dimensional data analysis
+  * Local adaption of sparse penalty and smooth penalty
+  * Bi-level selection for linear- and non-linear effect
+* To develop fast and scalable algorithms
+  * Uncertainty measures 
+* To develop user-friendly statistical softwares
+
+## Bayesian Hierarchical Additive Model (BHAM)
+### Model
+Given the data $\{\bm X_i, y_i\}_{i=1}^n$ where $\bm X_i \in \mathbb{R}^p$, $y_i \in \mathbb{R}$ and $p >> n$, we have the generalized additive model
+$$
+\begin{aligned}
+y_i &\overset{\text{i.i.d.}}{\sim} EF(\mu_i, \phi),\\
+g(\mu_i) &= \sum\limits_{j=1}^p f_j(X_{ij}), \quad i = 1, \dots, n.
+\end{aligned}
+$$
+We express smoothing functions in the matrix form using reparameterization
+$$
+g(\mu_i) = \sum\limits_{j=1}^p f_j(X_{ij}) = \sum\limits_{j=1}^p\left[{\beta_j^0}^T X_{ij}^0 + {\beta_j^{pen}}^T X_{ij}^{pen}\right].
+$$
+
+### Reparameterization
+
+* Introduced in @Wood2011
+* Smoothing penalty
+$$
+\lambda_j \int f^{\prime\prime}_j(x)dx = \lambda_j \bs \beta_j^T \bs S_j \bs \beta_j 
+$$
+* Re-parameterization based on eigen-decomposition of $S_j$
+  * $\bm S = \bm U \bm D \bm U^T$
+  * $\bm U \equiv [\bm U^\tp : \bm U^0]$ and $\bm D \equiv [\bm D^\tp : \bm 0]$
+  * $\bm X \bm \beta = \bm X \bm U \bm U^T \bm \beta = X^{0} \beta^0 + \bs X^\tp\beta^\tp$
+
+* Benefits
+  * Isolate linear parts from the polynomial parts of smoothing functions
+  * Independent prior for the penalized part
+
+
+### Spike-and-slab Spline Prior
+
+We propose a two-part spike-and-slab lasso prior, mixture double exponential prior 
+\begin{align*}
+\beta^0_{j} |\gamma^0_{j},s_0,s_1 &\sim DE(0,(1-\gamma^0_{j}) s_0 + \gamma^0_{j} s_1),\\
+\beta^\tp_{jk} | \gamma^\tp_{j},s_0,s_1 &\sim DE(0,(1-\gamma^\tp_{j}) s_0 + \gamma^\tp_{j} s_1), \\
+\gamma_{j}^{0} | \theta_j &\sim Bin(\gamma^{0}_{j}|1, \theta_j),\\
+\gamma_{j}^\tp | \theta_j &\sim Bin(\gamma^\tp_{j}|1, \theta_j),\\
+\theta_j &\sim \text{Beta}(a,b)
+\end{align*}
+
+$\bs \beta_j$ for curve interpolation, $\gamma_j^0, \gamma_j^\tp$ for bi-level selection, $\theta_j$ for local adaption
+
+
+### Visual Representation
+\begin{figure}
+\centering
+\resizebox{12cm}{5.5cm}{
+\begin{tikzpicture} [
+staticCompo/.style = {rectangle, minimum width=1cm, minimum height=1cm,text centered, draw=black, fill=blue!30},
+outCome/.style={ellipse, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=blue!30},
+mymatrix/.style={matrix of nodes, nodes=outCome, row sep=1em},
+PriorBoarder/.style={rectangle, minimum width=5cm, minimum height=10cm, text centered, fill=lightgray!30},
+background/.style={rectangle, fill=gray!10,inner sep=0.2cm, rounded corners=5mm}
+]
+
+\matrix (linearPrior) [matrix of nodes, column sep = 0mm, row sep = 0.7cm] {
+  \node (linearGamma) [outCome] { $\gamma_j^0 \sim Bin(1, \theta_j) $ };\\
+  \node (linearBeta) [outCome] { $\beta_j^0 \sim DE(0,(1-\gamma^0_{j}) s_0 + \gamma^0_{j} s_1)$};\\
+};
+\matrix (penPrior) [right = 2cm of linearPrior, matrix of nodes, column sep = 0mm, row sep = 0.7cm] {
+  \node (penGamma) [outCome] { $\gamma_{j}^\tp \sim Bin(1, \theta_j)$ };\\
+  \node (penBeta) [outCome] { $\beta_{jk}^\tp \sim  DE(0,(1-\gamma^0_{j}) s_0 + \gamma^0_{j} s_1)$};\\
+};
+
+
+\node (s) [staticCompo]  at ($(linearBeta)!0.5!(penBeta)$)  {($s_0, s_1$)};
+\node (Beta) [staticCompo, below = 1cm of s] {$\bs \beta = (\beta^0_1, \bs \beta^\tp_1, \dots,\beta^0_j, \bs \beta^\tp_j , \dots,\beta^0_p, \bs \beta^\tp_p) $};
+\node (Theta)[outCome, above = 2cm of s] {$\theta_{j} \sim Beta(a, b)$};
+\node (ab)[staticCompo, above = 0.5cm of Theta] {$(a, b)$};
+\node (Y) [outCome, below = 1cm of Beta] {$y_i \sim Expo. Fam. (g(\eta_i))$};
+
+\draw[->] (Theta) -- (linearGamma);
+\draw[->] (Theta) -- (penGamma);
+\draw[->] (linearGamma) -- (linearBeta) ;
+\draw[->] (penGamma) -- (penBeta);
+\draw[->] (ab) -- (Theta);
+\draw[->] (s) -- (linearBeta) ;
+\draw[->] (s) -- (penBeta);
+\draw[->] (linearBeta) -- (Beta);
+\draw[->] (penBeta) -- (Beta);
+\draw[->] (Beta) --  (Y);
+
+
+\begin{pgfonlayer}{background}
+  \node [background,
+   fit=(linearGamma) (linearBeta),
+   label=above:Null Space:] {};
+  \node [background,
+    fit=(penGamma) (penBeta),
+    label=above:Penalized Space:] {};
+\end{pgfonlayer}
+
+\end{tikzpicture}
+}
+\end{figure}
+
+
+## Fast Computing Algorithms
+### Fast Computing Algorithms
+
+We are interested in estimate $\Theta = \{\bm \beta, \bm \theta, \phi\}$
+
+* Two optimization based algorithms are proposed
+  - EM - Coordinate descent algorithm
+    - Sparse Solution and faster computation
+  - EM - Iterative weighted least square
+    - Uncertainty inference
+
+* Successful history in high-dimensional data analysis
+  * EMVS [@Rockova2014a], Spike-and-slab lasso [@Rockova2018]
+  * BhGLM [@Yi2019]
+
+
+<!-- TODO: continue here -->
+
+### EM algorithm
+We aim to maximize the log posterior density of $\Theta$ by averaging over all possible values of $\bm \gamma$
+$$
+\begin{aligned}
+& Q(\Theta, \bm \gamma) \equiv \log p(\Theta, \bm \gamma| \textbf{y}, \textbf{X}) \\
+&= \log p(\textbf{y}|\bs \beta, \phi) + \log p(\phi) + \sum\limits_{j=1}^p\left[\log p(\beta^0_j|\gamma^0_j)+\sum\limits_{k=1}^{K_j} \log p(\beta^{pen}_{jk}|\gamma^{pen}_{jk})\right]\\
+& +\sum\limits_{j=1}^{p} \left[ (\gamma^0_j+\gamma_{j}^{pen})\log \theta_j + (2-\gamma^0_j-\gamma_{j}^{pen}) \log (1-\theta_j)\right] +  \sum\limits_{j=1}^{p}\log p(\theta_j)
+\end{aligned}
+$$
+
+### EM algorithms
+* E-step
+  * Formulate $E_{\bm \gamma|\Theta^{(t)}}\left[Q(\Theta, \bm \gamma)\right] = E(Q_1) + E(Q_2)$
+    * $E(Q_1)$ is a penalized likelihood function of $\beta, \phi$
+    * $E(Q_2)$ is a posterior density of $\theta$ given $E(\gamma)$
+    * $E(Q_1)$ and $E(Q_2)$ are conditionally independent
+  * Calculate $E(\gamma^0_{j})$ and $E(\gamma^{pen}_{j})$, and penalties by Bayes' theorem
+* M-step: 
+  * Use algorithms to fit penalized model in $E(Q_1)$to update $\beta, \phi$ 
+    * Coordinate descent
+    * Iterative weighted least square
+  * Closed form calculation via $E(Q_2)$ to update $\theta$
+<!-- * Repeat E- and M-steps until convergent -->
+
+### Tuning Parameter Selection
+* $s_0$ and $s_1$ are tuning parameters
+* Empirically, $s_1$ has extremely small effect on changing the estimates
+* Focus on tuning $s_0$
+* Instead of the 2-D grid, We consider a sequence of $L$ ordered values $\{s_0^l\}: 0 < s_0^1 < s_0^2 < \dots < s_0^L < s_1$
+* Cross-validation to choose optimal value for $s_0$
+
+  
+  
+## Conclusion
+
+- Proposed fast and scalable high dimensional GAM
+  - Organic balance between sparse penalty and smooth penalty
+  - Bi-level selection for linear- and non-linear effects
+  - Uncertainty measures provided
+
+- R package: \texttt{BHAM}
+  - Ancillary functions for high-dimensional formulation
+  - Model summary and variable selection
+  - Covariate adjustment without penalty
+  - Website via [_boyiguo1.github.io/BHAM_](https://boyiguo1.github.io/BHAM/)
+
