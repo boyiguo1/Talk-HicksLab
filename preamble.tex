@@ -2,8 +2,16 @@
 \usepackage{tikz}
 \usepackage{pgfplots}
 \usepackage{bm}
+\usepackage{graphicx}
+
+
+
 \usetikzlibrary{shapes.geometric, arrows, positioning, calc, matrix, backgrounds, fit}
 \newcommand{\bs}[1]{\boldsymbol{#1}}
 \newcommand{\tp}{\text{pen}}
 \newcommand{\iid}{\overset{\text{i.i.d.}}{\sim}}
 \renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+\newcommand{\trnp}{^\text{T}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\pgfplotsset{compat=1.18}

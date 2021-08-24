@@ -4,7 +4,7 @@ author: "Boyi Guo"
 institute: |
   | Department of Biostatistics
   | University of Alabama at Birmingham
-date: "August 8th, 2021 "
+date: "August 25th, 2021 "
 output: 
   beamer_presentation:
     keep_tex: FALSE
@@ -22,43 +22,207 @@ bibliography:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+library(knitr)
 ```
 
-# Outline
-  - Self-introduction
-  - Multivariate Outcome Treatment Effect Random Forest (MOTE RF)
+## Outline
+  - About Me
   - Bayesian Hierarchical Additive Model
-  - Epidemiology Study
+  - Random Forest for Estimating Multivariate Outcome Treatment Effects 
   - Future Directions
 
-# MOTE RF
-### Motivation
-- A study about different forms of almond diet (whole almond Vs processed almond) on improving biomarkers
-  - Balanced two-arm randomized trial
-  - Microbiomes and Biomarkers are measured pre- and post- intervention
-  
-- How would the treatment effect of improving the biomarker be different regarding their pre-treatment microbiome status
-  - treatment effect
+# About me
+### Education Background
 
-### Challenges
-- Unobservable treatment effect
-- Multivariate outcome
-- Pre- and Post- collected data
-- Correlation structure among predictors and outcomes
+- 5th-year Ph.D. candidate in BST @ UAB
+ 
+- Dissertation: _Bayesian Hierarchical Additive Models in High Dimensional Data Analysis_
+ 
+- Background:
+  - B.S.s in Statistics and Computer Science, University of Illinois at Urbana-Champaign, 2014
+  - M.S. in Statistics, UIUC, 2017
+ 
+### Me as Person
+- Born and raised in China
+- Enjoy conversations, mentoring and leadership
+- Hobbies
+  - Cooking, basketball, guitar playing
+  - Exploring personal identity
 
-### Assumptions
+### Me as Statisticitian
+:::::::::::::: {.columns}
+::: {.column width=.05}
+\ 
+:::
+
+::: {.column width=.7}
+- A good collaborative biostatistician
+- 5-year experience as statistical consultant (pre-doctoral level)
+- [the Reason for Geographic and Racial Difference in Stroke study](https://www.uab.edu/soph/regardsstudy/)
+- Exposure to many Epidemiology concepts, collaboration with physicians
+  - Case-cohort design, Mediation analysis, Competing risk models
+:::
+
+::: {.column}
+```{r out.height='50%', fig.align='center'}
+include_graphics("Figures/REGARDS-logo.jpg")
+```
+:::
+
+::: {.column width=.05}
+\ 
+:::
+::::::::::::::
+
+### Me as Methdologist
+:::::::::::::: {.columns}
+
+::: {.column width=.05}
+\ 
+:::
+
+::: {.column width=.5}
+- Bayesian hierarchical models
+  - High-dimensional data analysis
+  - Scalability via optimization algorithms
+- Supervised Learning
+  - Generalized additive models
+  - Random forests
+- Predictive Modeling
+:::
+
+::: {.column}
+```{r, out.height='40%', out.width='100%', fig.align='center', fig.cap = "Densities of Spike-and-slab priors"}
+include_graphics("Figures/SS_Priors.png")
+```
+<!-- # ```{r out.height='40%', fig.align='center'} -->
+<!-- # include_graphics("RF.png") -->
+<!-- # ``` -->
+:::
+::::::::::::::
 
 # BHAM {.unlisted}
 ```{r child = "02-BHAM.Rmd"}
 ```
 
-# Collaborative Projects
 
+# MOTE RF
+### Motivation
+A dietary study on the health benefit of consume whole almond versus processed almond
+
+  - Balanced two-arm randomized trial 
+  $$ A \in \mathcal{A} = \{-1, 1\}, Pr(A=1) = Pr(A=-1) = 0.5, A \indep \bs X $$ 
+  - Microbiomes ($\bs X$) and Biomarkers ($\bs Y$) are measured pre- and post- intervention, denoted with superscripts $b, e$
+  $$\{(\bs X_i^b, \bs Y_i^b, A, \bs X_i^e, \bs Y_i^e)\}^n_{i=1}$$
+
+How to model individualized treatment effect given microbiome data?
+$$
+E(\Delta \bs Y_{(A=1)} - \Delta \bs Y_{(A=-1)}| \bs X^b),
+$$
+where $\Delta \bs Y = \bs Y_i^e - \bs Y_i^b$
+
+### Challenges
+- Treatment effects are not directly observable
+- Complexity of underlying signals
+  - Relaxation of the linear assumption
+- Joint modeling of multivariate outcome
+- Correlation structure among predictors and outcomes
+- Exploit the pre- and post- measurements for enhanced estimation accuracy
+  - With assumptions
+
+### Assumptions
+
+\begin{figure}[!h]
+  \scalebox{0.85}{
+    \centering
+    \begin{tikzpicture}[node distance=2cm]
+    \tikzstyle{arrow} = [ultra thick,->,>=stealth]
+    \node[rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30](PTX){Pre-treatment Covariate $\bm{X}^b$};
+    \node[rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30, below of=PTX](PTY){Pre-treatment Response $\bm{Y}^b$};
+    \node[rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30, 
+    right of=PTX, xshift=5cm
+    ](ATX){Post-treatment Covariate $\bm{X}^e$};
+    \node[rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30, below of=ATX](ATY){Post-treatment Response $\bm{Y}^e$};
+    \draw[arrow] (PTX)-- node[anchor=east]{$\bm g(\bm X^b)$} (PTY);
+    \draw[arrow] (PTX)--node[anchor=south]{Treatment $A$} node[below] {$\bm f(\bm X^b, A)$}(ATX);
+    \draw[arrow] (ATX)--node[anchor=west]{$\bm g(\bm X^e)$}(ATY);
+    \end{tikzpicture}
+    }
+\end{figure}
+
+- Link function $\bs g(\cdot): \mathcal{X} \rightarrow \mathcal{Y}$    
+- Treatment effect function $\bs f(\cdot, \cdot): \mathcal{X} \times \mathcal{A} \rightarrow \mathcal{Y}$
+
+## Multivariate Random Forest
+
+- Random forest framework for flexible signal estimation
+  - Recursive partitioning of sample space
+  - Similar treatment effect within each internal node
+- Modified outcomes $\Delta \bs Y A$ as response of the proposed model
+  $$
+  E(\Delta \bs Y A|\bs X^b) = E(\Delta \bs Y| \bs X^b, A=1) - E(\Delta \bs Y| \bs X^b, A=-1)
+  $$
+- Oblique split rule
+  - A linear combination of predictors, $\bs \alpha ^T \bs X^e$, as _splitting variable_
+  - Variance reduction on a pusdo-response, i.e. dimension-reduced modified outcomes, $\bs\kappa^T\Delta Y$
+  - Two unknown vectors, $\bs\alpha$ and $\bs\kappa$, are calculated locally using  multi-block Canonical Correlation Analysis (CCA)
+  
+### Multi-block Canonical Correlation Analysis
+When the assumed link function $\bs g(\bs X)$ and treatment effect function $\bs f(\bs X^b, A)$ are linear,
+$$
+E(\Delta \bs Y A|\bs X^b) = \bs \Gamma E(\Delta \bs X A|\bs X^b)  = 2 \bs \Gamma \bs B \bs X^b
+$$
+
+  - Linear assumption are relaxed by random forest framework
+
+CCA are used to find the solution space where the treatment effects are 
+\begin{align*}
+\{\bm{\widehat{\alpha}}, \bm{\widehat{\beta}}, \bm{\widehat{\kappa}}\} = & \argmax\limits_{\lVert\alpha\rVert^2 = \lVert\beta\rVert^2 = \lVert\kappa\rVert^2 = 1}
+\Big[ \text{cov}( \bm \alpha\trnp \bm{X}^b, \bm \beta \trnp \Delta \bm{X} A ) + \nonumber \\ 
+&\quad \text{cov} (\bm \alpha\trnp \bm{X}^b, \bm \kappa \trnp \Delta \bm{Y} A) +\text{cov}(\bm \beta\trnp \Delta \bm{X} A, \bm \kappa\trnp \Delta \bm{Y} A ) \Big] \label{eqn:multiblock}
+\end{align*}
+
+  - Pre- and post- measurements regularize CCA solution space 
 
 # Future Direction
 
+### Integrative Analysis
+- Variable selection
+  - Integration of external biology information
+  - Bi-level selection problem in multimodal Learning
+
+- Prognostic modeling
+  - Integrating clinical variables with -omics data
+
+
+### Random Forests for -Omics Data Analysis
+- Assessment of classical random forests in high-dimensional settings
+  - Tuning parameters' effect on prediction performance
+  - Variable selection
+  
+- Integrative random forests via regularized oblique splitting
+  - Improved prediction and variable selection
+
+
+### Expectation
+- Develop impactful research
+  - Hands-on experience
+  - Problem-forward research
+- Advanced training in R package development with emphasis in Bioconductor packages
+- Foster strong relationship with everyone
+- More collaborations
+
 # Closing Remarks
 
+Taken from my 2015 personal statement of the rejected JHU Ph.D. application
+\  
+
+\  
+
+> The missions honored by the biostatistics program at Johns Hopkins University resonate with my eagerness to accomplish my lifetime goal in academia. ...  The Center for Computational Biology will offer me an abundance of opportunities to gain hands-on experience in solving real-world biostatistical problems... Johns Hopkins sets up the platform for broadening my horizon of research as well as expanding my network for future collaborations. I strive to live up my promise in the pursuit for distinction.
+
+
+## Appendices
 ### BHAM Simulation Study {.unlisted .unnumbered}
 * Follow the data generating process introduced in @Bai2020. 
 * $n_{train} = 500$, $n_{test}=1000$
