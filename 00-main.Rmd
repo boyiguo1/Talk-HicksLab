@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Statistical Learning Methods in -Omics Data Analysis"
 author: "Boyi Guo"
 institute: |
   | Department of Biostatistics
@@ -27,7 +27,7 @@ library(knitr)
 
 ## Outline
   - About Me
-  - Bayesian Hierarchical Additive Model
+  - Bayesian Hierarchical Additive Models
   - Random Forest for Estimating Multivariate Outcome Treatment Effects 
   - Future Directions
 
@@ -44,6 +44,7 @@ library(knitr)
  
 ### Me as Person
 - Born and raised in China
+- 10-year in Midwest and 4-year in South
 - Enjoy conversations, mentoring and leadership
 - Hobbies
   - Cooking, basketball, guitar playing
@@ -60,7 +61,7 @@ library(knitr)
 - 5-year experience as statistical consultant (pre-doctoral level)
 - [the Reason for Geographic and Racial Difference in Stroke study](https://www.uab.edu/soph/regardsstudy/)
 - Exposure to many Epidemiology concepts, collaboration with physicians
-  - Case-cohort design, Mediation analysis, Competing risk models
+  - Case-cohort design, Mediation analysis, administrative side of a study
 :::
 
 ::: {.column}
@@ -108,14 +109,14 @@ include_graphics("Figures/SS_Priors.png")
 
 # MOTE RF
 ### Motivation
-A dietary study on the health benefit of consume whole almond versus processed almond
+A dietary study on the health benefit of consuming whole almond versus processed almond
 
   - Balanced two-arm randomized trial 
   $$ A \in \mathcal{A} = \{-1, 1\}, Pr(A=1) = Pr(A=-1) = 0.5, A \indep \bs X $$ 
   - Microbiomes ($\bs X$) and Biomarkers ($\bs Y$) are measured pre- and post- intervention, denoted with superscripts $b, e$
   $$\{(\bs X_i^b, \bs Y_i^b, A, \bs X_i^e, \bs Y_i^e)\}^n_{i=1}$$
 
-How to model individualized treatment effect given microbiome data?
+How to model individualized treatment effect given the baseline microbiome data?
 $$
 E(\Delta \bs Y_{(A=1)} - \Delta \bs Y_{(A=-1)}| \bs X^b),
 $$
@@ -151,7 +152,7 @@ where $\Delta \bs Y = \bs Y_i^e - \bs Y_i^b$
 \end{figure}
 
 - Link function $\bs g(\cdot): \mathcal{X} \rightarrow \mathcal{Y}$    
-- Treatment effect function $\bs f(\cdot, \cdot): \mathcal{X} \times \mathcal{A} \rightarrow \mathcal{Y}$
+- Treatment effect function $\bs f(\cdot, \cdot): \mathcal{X} \times \mathcal{A} \rightarrow \mathcal{X}$
 
 ## Multivariate Random Forest
 
@@ -162,10 +163,10 @@ where $\Delta \bs Y = \bs Y_i^e - \bs Y_i^b$
   $$
   E(\Delta \bs Y A|\bs X^b) = E(\Delta \bs Y| \bs X^b, A=1) - E(\Delta \bs Y| \bs X^b, A=-1)
   $$
-- Oblique split rule
-  - A linear combination of predictors, $\bs \alpha ^T \bs X^e$, as _splitting variable_
-  - Variance reduction on a pusdo-response, i.e. dimension-reduced modified outcomes, $\bs\kappa^T\Delta Y$
-  - Two unknown vectors, $\bs\alpha$ and $\bs\kappa$, are calculated locally using  multi-block Canonical Correlation Analysis (CCA)
+- Oblique splitting rule
+  - A linear combination of predictors, $\bs \alpha ^T \bs X^b$, as _splitting variable_
+  - Variance reduction on a pusdo-response, i.e. dimension-reduced modified outcomes, $\bs\kappa^T\Delta \bs Y A$
+  - Two vectors, $\bs\alpha$ and $\bs\kappa$, are calculated locally using  multi-block Canonical Correlation Analysis (CCA)
   
 ### Multi-block Canonical Correlation Analysis
 When the assumed link function $\bs g(\bs X)$ and treatment effect function $\bs f(\bs X^b, A)$ are linear,
@@ -184,24 +185,32 @@ CCA are used to find the solution space where the treatment effects are
 
   - Pre- and post- measurements regularize CCA solution space 
 
-# Future Direction
+
+### Conclusion
+- The proposed methods outperforms $L_1$ penalized models and marginal RF when the signals are non-linear
+- R package [MOTE.RF](https://github.com/boyiguo1/MOTE.RF) on GitHub
+- Limitations:
+  - Only applies to randomzied trial with two interventions
+  - Would not work well when number of predictors are large
+
+# Future Directions
 
 ### Integrative Analysis
 - Variable selection
   - Integration of external biology information
-  - Bi-level selection problem in multimodal Learning
+  - Bi-level selection problem in multimodal learning
 
 - Prognostic modeling
-  - Integrating clinical variables with -omics data
+  - Integrating -omics data with clinical data
 
 
 ### Random Forests for -Omics Data Analysis
-- Assessment of classical random forests in high-dimensional settings
+- Assessment of classical random forests in $p>>n$ settings
   - Tuning parameters' effect on prediction performance
-  - Variable selection
+  - Variable importance
   
 - Integrative random forests via regularized oblique splitting
-  - Improved prediction and variable selection
+  - Improved prediction and variable importance
 
 
 ### Expectation

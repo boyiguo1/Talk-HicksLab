@@ -1,4 +1,4 @@
-### Curve Interpolation
+### Non-linear Effect Modeling
 
 * Traditional modeling approach
   * Categorization of continuous variable
@@ -157,7 +157,7 @@ We are interested in estimate $\Theta = \{\bm \beta, \bm \theta, \phi\}$
 
 * Two optimization based algorithms are proposed
   - EM - Coordinate descent algorithm
-    - Sparse Solution and faster computation
+    - Sparse solution and faster computation
   - EM - Iterative weighted least square
     - Uncertainty inference
 
@@ -212,5 +212,5 @@ $$
   - Ancillary functions for high-dimensional formulation
   - Model summary and variable selection
   - Covariate adjustment without penalty
-  - Website via [_boyiguo1.github.io/BHAM_](https://boyiguo1.github.io/BHAM/)
+  - Website via [_boyiguo1.github.io/BHAM_](https://boyiguo1.github.io/BHAM/articles/introduction.html)
 
